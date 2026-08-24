@@ -1,20 +1,12 @@
-template_version = "0.1"
-
-[[settings]]
-key = "confirmation_mode"
-required = true
-type = "string"
-default = "strict_stop"
-allowed_values = ["strict_stop", "agent_decides"]
-description = "確認待ちで回答がない場合に止まるか、Agent判断で進むか"
+template_version = "0.2"
 
 [[settings]]
 key = "mentor_start_advice_mode"
 required = true
 type = "string"
 default = "daily_first_question"
-allowed_values = ["manual", "daily_first_question", "auto_on_start"]
-description = "メンター表示を学習開始入力だけで出すか、日付変更後の初回学習質問でも出すか、将来の起動時自動表示にするか"
+allowed_values = ["manual", "daily_first_question"]
+description = "mentor表示を学習開始だけで出すか、日付変更後の初回学習質問でも出すか"
 
 [[settings]]
 key = "agent_trace_mode"
@@ -25,151 +17,10 @@ allowed_values = ["hidden", "brief", "detailed"]
 description = "回答時にmain Agentとsub Agentの処理経路を表示する粒度"
 
 [[settings]]
-key = "scope_access_mode"
-required = true
-type = "string"
-default = "explicit_only"
-allowed_values = ["explicit_only", "user_defined_depth", "broad_allowed"]
-description = "参照範囲の扱い"
-
-[[settings]]
 key = "scope_listing_max_depth"
 required = true
 type = "integer"
 default = 2
 min = 0
 max = 5
-description = "ディレクトリ指定時に一覧確認してよい最大階層"
-
-[[settings]]
-key = "daily_profile_retention_days"
-required = true
-type = "integer"
-default = 60
-min = 1
-max = 365
-description = "日次学習傾向ファイルの保存日数"
-
-[[settings]]
-key = "weakness_review_interval_days"
-required = true
-type = "integer"
-default = 4
-min = 1
-max = 30
-description = "苦手傾向の見立てを学習者へ確認する間隔"
-
-[[settings]]
-key = "profile_pending_review_interval_days"
-required = true
-type = "integer"
-default = 4
-min = 1
-max = 30
-description = "プロフィール更新候補をまとめて確認する間隔"
-
-[[settings]]
-key = "review_offsets_days"
-required = true
-type = "integer_array"
-default = [1, 3, 7, 10]
-min_item = 1
-max_item = 365
-description = "復習対象にする過去日数"
-
-[[settings]]
-key = "review_question_count"
-required = true
-type = "integer"
-default = 1
-min = 1
-max = 3
-description = "学習開始時に出す復習問題数"
-
-[[settings]]
-key = "weakness_types"
-required = true
-type = "string_array"
-default = ["technical_knowledge", "structure_understanding", "thinking_process"]
-allowed_items = ["technical_knowledge", "structure_understanding", "thinking_process"]
-description = "苦手の種類"
-
-[[settings]]
-key = "weakness_priority_order"
-required = true
-type = "string_array"
-default = ["technical_knowledge", "structure_understanding", "thinking_process"]
-allowed_items = ["technical_knowledge", "structure_understanding", "thinking_process"]
-description = "苦手を扱う優先順"
-
-[[settings]]
-key = "review_eligible_confidence_levels"
-required = true
-type = "string_array"
-default = ["high", "medium"]
-allowed_items = ["high", "medium", "low"]
-description = "通常表示や復習候補に使える確信度"
-
-[[settings]]
-key = "weakness_confidence_visibility"
-required = true
-type = "string"
-default = "hidden_by_default"
-allowed_values = ["hidden_by_default", "show_on_request"]
-description = "学習者向け表示で確信度を通常隠すか"
-
-[[settings]]
-key = "evidence_log_link_limit"
-required = true
-type = "integer"
-default = 3
-min = 1
-max = 3
-description = "苦手傾向の根拠ログリンクの最大表示件数"
-
-[[settings]]
-key = "technical_area_candidates"
-required = true
-type = "string_array"
-default = ["Laravel", "Route", "Controller", "Blade", "JavaScript", "Fetch", "Validation", "Database", "Test"]
-description = "技術領域の基本候補"
-
-[[settings]]
-key = "technical_area_custom_candidates"
-required = true
-type = "string_array"
-default = []
-description = "学習ログから追加された技術領域候補"
-
-[[settings]]
-key = "technical_area_aliases"
-required = true
-type = "table_array"
-default = []
-required_fields = ["from", "to"]
-field_types = ["string", "string"]
-description = "技術領域の読み替え設定"
-
-[[settings]]
-key = "config_validation"
-required = true
-type = "string"
-default = "enabled"
-allowed_values = ["enabled"]
-description = "設定検証を有効にする"
-
-[[settings]]
-key = "technical_area_alias_validation"
-required = true
-type = "string"
-default = "enabled"
-allowed_values = ["enabled", "disabled"]
-description = "技術領域の読み替え設定を検証するか"
-
-[[settings]]
-key = "technical_area_alias_validation_error_mode"
-required = true
-type = "string"
-default = "skip_alias_analysis_and_suggest_fix"
-allowed_values = ["skip_alias_analysis_and_suggest_fix"]
-description = "読み替え設定に形式Errorがある場合の扱い"
+description = "明示されたディレクトリについて、一覧確認してよい最大階層"

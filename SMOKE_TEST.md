@@ -1,13 +1,20 @@
 # SMOKE_TEST
 
+この文書は、ProgrammingAIの要件、AGENTS.md、Skill定義が、代表的な学習シナリオに対して期待どおり読めるかを確認するための手動チェックリストである。
+Rubyハーネスは保存フローを再現せず、設定値と保存済み分類ラベルの最小整合性だけを確認する。
+
 ## 最小フロー
 
 ```md
 質問
+→ UserPromptSubmit hook
+→ daily_rollup_on_prompt.rbによる日次成果物確認
 → 分類
+→ Learning Case一次記録
 → 回答
 → 理解確認
-→ ターム境界判定または明示的な要約依頼
+→ Learning Case状態更新
+→ 必要な場合だけログ化確認または明示的な要約依頼
 → ログ候補
 → 保存許可
 → ローカル学習ログ生成
@@ -17,8 +24,8 @@
 
 1. 1ケースずつ実行する。
 2. 期待値と実出力を比較する。
-3. ズレた場合は、原因をAgent定義、Skill定義、入力条件、期待値に分ける。
-4. Agent定義またはSkill定義を修正する。
+3. ズレた場合は、原因を要件、Agent定義、Skill定義、入力条件、期待値に分ける。
+4. 要件、Agent定義、またはSkill定義を修正する。
 5. 同じダミー入力で再検証する。
 6. 合格するまで次のケースへ進まない。
 7. 同じ原因で3回連続して失敗した場合は、学習者へ重要判断として確認する。
@@ -35,7 +42,7 @@
 - classifier: feature
 - scope-reader: 参照範囲がないため、コード閲覧前に確認が必要
 - feature-answer: 回答する場合は仮定を明示し、全体像、理解ステップ、確認順序を優先する
-- learning-term-manager: 参照範囲確認が必要なため、まだターム作成しない
+- learning-log-workflow: 回答未完了のため確定ログは作らず、必要ならLearning Caseに参照範囲確認中として残す
 ```
 
 ### 002 unit分類と回答
@@ -74,25 +81,26 @@ Call to undefined method App\Models\User::books() が出ます。
 - 原因を断定しない
 ```
 
-### 005 学習タームを作成しない入力
+### 005 Learning Caseに記録しない入力
 
 ```md
 入力:
-configの参照範囲設定を変えたいです。
+configのagent_trace_modeを変えたいです。
 
 期待値:
-- learning-term-manager: create_term=false
-- 理由: 設定変更であり学習タームではない
+- learning-log-workflow: learning_case_record_required=false
+- 理由: 設定変更であり、プログラミング学習質問ではない
 ```
 
 ### 006 ログ化フロー
 
 ```md
 入力:
-学習者が理解確認に答えた場合、ターム境界候補として扱う。
+学習者が理解確認に答えた場合、Learning Caseへ理解確認結果を追記する。
 
 期待値:
-- learning-term-manager: term_boundary_candidate=true, awaiting=log_decision
+- learning-log-workflow: Learning Case状態更新案を返す
+- 復習価値がある場合だけ、ログ化するかどうかを確認する
 - ログ化する場合、学習ログ候補を提示する
 - 学習者が明言した内容とAgentの見立てを分ける
 - 保存許可まで確定保存しない
@@ -106,7 +114,7 @@ configの参照範囲設定を変えたいです。
 
 期待値:
 - learning-log-workflow: 学習ログ候補を提示する
-- awaiting: save_permission
+- next_user_reply: save_permission
 - 保存はまだ行わない
 ```
 
@@ -138,11 +146,12 @@ configの参照範囲設定を変えたいです。
 
 ```md
 入力:
-Route / Controller / Blade の流れで2回つまずいた確定学習ログがある。
+Route / Controller / Blade の流れで2回つまずき、観察パターンとして「複数ファイルの入口、処理、出力を順番に追うところで迷う」が残っている。
 
 期待値:
-- mentor Agent: `.codex/agents/mentor/MEMORY.md` に構造理解の苦手候補としてまとめる
-- mentor: 最近の学習傾向で苦手を表示する
+- profile-memory: 観察パターンを中心に、構造理解の苦手候補としてまとめる
+- 関連技術語: Route、Controller、Bladeは補助タグとして扱う
+- mentor: 確信度が中以上の場合だけ、最近の学習傾向や復習候補に使う
 - 根拠ログリンクは最大3件
 - 確信度は通常表示しない
 ```
@@ -156,21 +165,41 @@ Route / Controller / Blade の流れで2回つまずいた確定学習ログが�
 期待値:
 - learning-logs直下に確定学習ログが保存される
 - mentor Agentがlearning-casesとlearning-logsを分析する
-- `.codex/agents/mentor/MEMORY.md` に、日付、分類、つまずき、技術領域、苦手種類、確信度、出現回数、根拠ログが保存される
-- 同じ苦手は重複追記ではなく、出現回数と根拠ログとしてまとまる
+- `.codex/agents/mentor/MEMORY.md` に、日付、分類、つまずき、苦手種類、観察パターン、関連技術語、確信度、出現回数、根拠ログが保存される
+- 同じ苦手は観察パターンを中心に、出現回数と根拠ログとしてまとまる
 ```
 
-### 012 日付変更後の初回学習質問
+### 012 日次学習傾向の観察項目
+
+```md
+入力:
+日付が変わった後、前日のLearning Caseから日次学習傾向ファイルを作る。
+
+期待値:
+- UserPromptSubmit hookが `.codex/internal/scripts/daily_rollup_on_prompt.rb` を呼ぶ
+- `notebook/mentor-briefings/YYYY-MM-DD.md` が既にあれば何もしない
+- 当日のmentor-briefingsがなければ日次処理を行う
+- 質問分類件数を集計する
+- 苦手種類候補の集計を出す
+- 観察パターンをまとめる
+- 関連技術語を補助タグとしてまとめる
+- 繰り返し候補を出す
+- learner-profile / Memory反映候補を分ける
+- `notebook/daily-learning-profiles/前日.md` と `notebook/mentor-briefings/今日.md` が成果物になる
+```
+
+### 013 日付変更後の初回学習質問
 
 ```md
 入力:
 日付が変わった後、最初のプログラミング学習質問が来る。
 
 期待値:
-- 前回タームが確認待ちでない場合、mentor分析が走る
+- ログ化確認、保存許可、参照範囲確認などの回答待ちでない場合、mentor-briefingsを読む
 - 回答 payload にmentorの最近の学習傾向、復習、確認ポイントが含まれる
-- `.codex/state/mentor-session.toml` に当日のmentor実行状態が残る
-- 前回タームがログ化確認待ちの場合は、mentorより先に確認待ちを解消する
+- 同じ入力に対して、質問分類と回答も続ける
+- 処理済み判定は `.codex/state` ではなく `notebook/mentor-briefings/YYYY-MM-DD.md` の存在で行う
+- ログ化確認待ちの場合は、mentorより先に確認待ちを解消する
 ```
 
 ## 合格条件
@@ -183,18 +212,24 @@ Route / Controller / Blade の流れで2回つまずいた確定学習ログが�
 - 明示的な要約依頼でログ候補だけを作る。
 - 保存拒否時に軽量メモを残さない。
 - 確定後にlearning-logs直下へ生成候補を作れる。
-- mentor Agentが、苦手傾向を根拠付きで判定し、必要なものだけmentor表示へ渡せる。
+- UserPromptSubmit hookの日次処理が成果物ファイルの存在で二重実行を避ける。
+- mentorが当日のmentor-briefingsを読み、初回学習質問ではmentor表示後に回答へ続ける。
+- profile-memoryとmentor Agentが、観察パターンを中心に苦手傾向を根拠付きで判定し、必要なものだけmentor表示へ渡せる。
 
 ## 不合格時
 
-期待値と実出力がずれた場合は、該当するSkillへ戻る。
+期待値と実出力がずれた場合は、まず `docs/MAINTAINER_GUIDE.md` の判断表で該当する責務を確認し、次に該当するSkillへ戻る。
 同じダミー入力で再検証し、合格するまで次へ進まない。
 
-## 検証履歴
+## 旧検証履歴
 
-- [2026-08-06-run-001.md](smoke-tests/2026-08-06-run-001.md): 7ケースPASS。検証中に見つけた小さな不整合を修正済み。
-- [2026-08-06-save-flow-run-001.md](smoke-tests/2026-08-06-save-flow-run-001.md): サンプル保存フローPASS。learning-cases、learning-logs、notebook、current-term.tomlの生成を確認済み。
-- [2026-08-06-additional-flow-run-001.md](smoke-tests/2026-08-06-additional-flow-run-001.md): 追加保存フローPASS。ログ化しない場合の軽量メモ、2件目の自動採番、paused-terms.tomlによる中断状態を確認済み。
-- [2026-08-06-resume-flow-run-001.md](smoke-tests/2026-08-06-resume-flow-run-001.md): paused状態からの再開PASS。current-termをunderstanding_checkへ戻す流れを確認済み。
-- [2026-08-06-retention-alias-run-001.md](smoke-tests/2026-08-06-retention-alias-run-001.md): 保持日数とtechnical_area_aliases形式Error PASS。古い日次ファイル削除と読み替え分析停止を確認済み。
-- [2026-08-06-all-checks-run-001.md](smoke-tests/2026-08-06-all-checks-run-001.md): 保存フロー系の一括検証PASS。
+旧Rubyハーネス時代の検証ログは、現行構成と混同しやすいため削除済み。
+現在の検証仕様は、この `SMOKE_TEST.md` を正とする。
+
+## 最小チェッカー
+
+設定値と保存済み分類ラベルの確認は次で行う。
+
+```sh
+ruby .codex/internal/validation/ProgrammingAIAgent.rb test
+```

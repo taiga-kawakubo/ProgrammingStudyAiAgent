@@ -14,7 +14,7 @@ description: Explain whole features, file relationships, processing flow, and da
 - scope-readerが許可した参照範囲
 - 学習者が貼り付けたコード、ファイル一覧、説明、エラーメッセージ
 - 参照済みファイルの内容または抜粋
-- 進行中の学習タームのmetadata
+- 直前の会話から引き継ぐ必要がある学習文脈
 
 # 出力
 
@@ -56,7 +56,9 @@ description: Explain whole features, file relationships, processing flow, and da
 
 - 理解度候補
 - 苦手の具体内容候補
-- 苦手傾向タグ候補
+- 苦手種類候補
+- 観察パターン候補
+- 関連技術語候補
 - 学習ログ化候補
 - 追加で確認したい参照範囲
 

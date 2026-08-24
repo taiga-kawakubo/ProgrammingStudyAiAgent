@@ -3,38 +3,36 @@
 | 場所 | 何のためにあるか | 誰が更新するか | 学習者が編集してよいか |
 | --- | --- | --- | --- |
 | README.md | 利用者向けの入口と使い方を説明する | main Agentまたは保守者 | 原則いいえ |
-| docs/ | 要件定義書など、開発前に読む文書を置く | main Agentまたは保守者 | 原則いいえ |
+| docs/ | 要件定義書、保守ガイドなどを置く | main Agentまたは保守者 | 原則いいえ |
 | AGENTS.md | AgentとサブAgentの責務を説明する | main Agentまたは保守者 | 原則いいえ |
-| MISSION.md | ProgrammingAIの目的と方針を説明する | main Agentまたは保守者 | 原則いいえ |
-| HARNESS_MAP.md | 全体接続を確認する地図 | main Agentまたは保守者 | 原則いいえ |
 | PROJECT_STRUCTURE.md | ディレクトリと主要ファイルの役割を説明する | main Agentまたは保守者 | 原則いいえ |
 | SMOKE_TEST.md | 最小フローと統合確認の手順を記録する | main Agentまたは保守者 | 原則いいえ |
-| smoke-tests/ | ダミー検証や保存フローの実行結果を置く | main Agent | 原則いいえ |
-| .codex/internal/ | 保守者向けの内部検証ハーネスと検証補助ファイルを置く | main Agentまたは保守者 | 原則いいえ |
+| .codex/hooks.json | CodexのUserPromptSubmit hookに日次処理scriptを登録する | main Agentまたは保守者 | 原則いいえ |
+| .codex/internal/scripts/ | hookから実行する機械的な補助scriptを置く | main Agentまたは保守者 | 原則いいえ |
+| .codex/internal/validation/ | 設定値と保存済み分類ラベルの整合性を確認する最小チェッカーを置く | main Agentまたは保守者 | 原則いいえ |
 | learning-cases/ | 日付ごとの一次学習記録を置く | main Agent | 原則いいえ |
 | learning-logs/ | 確定学習ログを直下に置く | main Agent | 修正が必要な場合のみ |
-| notebook/ | 日次傾向、learner-profile.md、Memory.mdを置く | main Agent | learner-profile.mdとMemory.mdは必要時に編集可 |
-| .codex/state/ | current-term.tomlなどの進行状態を置く | main Agent | 原則いいえ |
+| notebook/ | 日次傾向、mentor-briefings、learner-profile.md、Memory.mdを置く | main Agent | learner-profile.mdとMemory.mdは必要時に編集可 |
 | .codex/config.toml | 実際の設定値 | main Agentまたは学習者 | はい |
 | .codex/config.defaults.toml | 設定チェック定義 | main Agentまたは保守者 | 原則いいえ |
 | .codex/skills/ | Skill本文 | main Agentまたは保守者 | 原則いいえ |
 | .codex/agents/mentor/ | mentor Agentの責務定義と専用MEMORYを置く | main Agent | 原則いいえ |
 
-## `.codex/state/` の役割
+## 日次処理の役割
 
-`.codex/state/` は、学習者向けの学習ログではなく、main Agentが現在の学習状態を管理するための内部状態置き場である。
+日次処理は、状態ファイルではなく成果物ファイルの存在で処理済みかどうかを判断する。
 
 主に次の内容を扱う。
 
 | 場所 | 役割 |
 | --- | --- |
-| `.codex/state/current-term.toml` | 現在進行中の学習ターム、分類、状態、次に待っている返答を記録する |
-| `.codex/state/paused-terms.toml` | 中断中の学習タームを記録する |
-| `.codex/state/daily-profile-rollover.toml` | 日付変更後の日次学習傾向作成が二重に走らないように、処理済み日付を記録する |
-| `.codex/state/terms/` | 学習タームごとの質問、参照内容、回答下書き、ログ下書き、metadataを置く |
+| `.codex/hooks.json` | ユーザー入力時に日次処理scriptを呼び出す |
+| `.codex/internal/scripts/daily_rollup_on_prompt.rb` | 当日のmentor-briefingsがなければ、前日のLearning Caseから日次学習傾向とmentor-briefingsを作る |
+| `notebook/daily-learning-profiles/YYYY-MM-DD.md` | 前日のLearning Caseから作成した日次学習傾向 |
+| `notebook/mentor-briefings/YYYY-MM-DD.md` | その日の学習開始時にmentorが読む学習前メモ |
 
 学習者に見せる記録は `learning-cases/`、確定学習ログは `learning-logs/`、学習傾向や苦手は `notebook/` に保存する。
-`.codex/state/` は、これらの保存処理を安全に進めるための作業状態であり、手作業で編集または削除しない。
+日次処理の二重実行防止は、`notebook/mentor-briefings/YYYY-MM-DD.md` が存在するかどうかで判断する。
 
 ## `.codex/agents/mentor/` の役割
 
@@ -58,11 +56,16 @@ mentor専用MEMORYは、`notebook/Memory.md` とは役割が違う。
 - `learning-cases/*.md`
 - `learning-logs/*.md`
 - `notebook/daily-learning-profiles/*.md`
+- `notebook/mentor-briefings/*.md`
 - `notebook/learner-profile.md` 内の具体的な苦手傾向
 - `notebook/Memory.md` 内の具体的な質問傾向
 - `.codex/agents/mentor/MEMORY.md` 内の具体的な苦手分析ログ
-- `.codex/state/terms/` 内のターム別作業状態
-- `.codex/state/current-term.toml` の進行中ターム
 
 原本を更新するときは、学習者個人のログを同期しない。
-分類ガード、Skill、設計書、内部検証ハーネスなど、Agentの仕組みに関する変更だけを反映する。
+hook、script、分類ガード、Skill、設計書、内部検証ハーネスなど、Agentの仕組みに関する変更だけを反映する。
+
+## 要件定義と保守ガイド
+
+`docs/RequirementsDefinition.md` は、ProgrammingAIの課題意識、目的、満たすべき要件を確認する文書である。
+保守時の全体接続、確認順序、判断表、検証方法は `docs/MAINTAINER_GUIDE.md` にまとめる。
+`.codex/internal/validation/ProgrammingAIAgent.rb` は、設定値と保存済み分類ラベルの最小整合性を確認する補助として扱う。

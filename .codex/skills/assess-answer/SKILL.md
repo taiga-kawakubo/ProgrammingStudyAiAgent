@@ -56,7 +56,9 @@ description: Evaluate learner code, design, tests, explanations, and understandi
 
 - 理解度候補
 - 苦手の具体内容候補
-- 苦手傾向タグ候補
+- 苦手種類候補
+- 観察パターン候補
+- 関連技術語候補
 - 学習ログ化候補
 - 追加で確認したい評価観点
 

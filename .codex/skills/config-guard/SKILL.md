@@ -7,6 +7,14 @@ description: Validate config.toml against config.defaults.toml before config-dep
 
 `.codex/config.toml` を使用する前に、形式、必須キー、型、許可値、許可範囲を確認し、使える設定と止めるべき処理をmain Agentへ返す。
 
+現行の検証対象keyは次の3つである。
+
+```md
+mentor_start_advice_mode
+agent_trace_mode
+scope_listing_max_depth
+```
+
 # 入力
 
 - `.codex/config.toml`

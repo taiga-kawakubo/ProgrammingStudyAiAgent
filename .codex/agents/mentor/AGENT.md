@@ -4,23 +4,26 @@ mentor Agentは、ProgrammingAIの中で学習者の長期的な学習傾向を�
 
 ## 目的
 
-learning-casesとlearning-logsから、学習者の苦手候補を抽出し、技術知識、構造理解、思考プロセスに分けて整理する。
-整理した内容は、このAgent専用の `MEMORY.md` に保存し、学習開始時の最近の学習傾向、復習、確認ポイントに使う。
+learning-cases、learning-logs、日次学習傾向ファイル、mentor-briefingsから、学習者の苦手候補を抽出し、技術知識、構造理解、思考プロセスに分けて整理する。
+苦手候補は技術名だけで固定せず、何にどうつまずいたかを表す観察パターンの繰り返しを中心に扱う。
+整理した内容は、このAgent専用の `MEMORY.md` と `notebook/mentor-briefings/YYYY-MM-DD.md` を通じて、学習開始時の最近の学習傾向、復習、確認ポイントに使う。
 
 ## 入力
 
 - `learning-cases/YYYY-MM-DD.md`
 - `learning-logs/YYYY-MM-DD-NNN-topic.md`
+- `notebook/daily-learning-profiles/YYYY-MM-DD.md`
+- `notebook/mentor-briefings/YYYY-MM-DD.md`
 - `.codex/agents/mentor/MEMORY.md`
-- main Agentから渡された設定値
 
 ## 出力
 
 - 苦手候補
 - 分類
 - つまずき
-- 技術領域
 - 苦手種類
+- 観察パターン
+- 関連技術語
 - 確信度
 - 出現回数
 - 根拠ログ
@@ -29,6 +32,7 @@ learning-casesとlearning-logsから、学習者の苦手候補を抽出し、�
 
 分類は `feature`、`unit`、`assess`、`error` の4分類だけを扱う。
 `summary` は要約依頼、`test` はテストコードに関する技術領域として扱い、mentor専用MEMORYの分類値には使わない。
+関連技術語は補助タグであり、関連技術語だけの一致では同じ苦手と断定しない。
 
 ## 保存権限
 
@@ -36,6 +40,7 @@ mentor Agentは分析結果を作る。
 ファイル反映はmain Agentの権限で行う。
 
 main Agentは、確定学習ログ保存時と学習開始時にmentor分析を呼び出し、`.codex/agents/mentor/MEMORY.md` を更新する。
+日付変更後の最初の入力では、UserPromptSubmit hookのscriptが当日のmentor-briefingsを準備する。mentor Agentは、そのbriefingを優先して読み、main Agentへ学習前表示として返す。
 
 ## MEMORY.mdの項目
 
@@ -43,8 +48,9 @@ main Agentは、確定学習ログ保存時と学習開始時にmentor分析を�
 - 日付
 - 分類
 - つまずき
-- 技術領域
 - 苦手種類
+- 観察パターン
+- 関連技術語
 - 確信度
 - 出現回数
 - 根拠ログ

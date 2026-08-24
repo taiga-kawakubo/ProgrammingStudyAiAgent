@@ -14,7 +14,7 @@ description: Classify learner programming questions into feature, unit, assess, 
 - 学習者の質問本文
 - 貼り付けられたコード、エラーメッセージ、説明、設計、テスト内容
 - 学習者が明示した参照範囲
-- 進行中の学習タームがある場合は、その分類と状態
+- 直前の会話でログ化確認や保存許可などの回答待ちがある場合は、その確認内容
 
 # 出力
 

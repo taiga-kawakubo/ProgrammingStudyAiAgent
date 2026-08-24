@@ -11,7 +11,7 @@ description: Enforce explicit learner-provided reference scope and prevent unsaf
 
 - 学習者の質問本文
 - 学習者が明示したファイル、ディレクトリ、行番号、関数名、画面名
-- `.codex/config.toml` の参照範囲設定
+- `.codex/config.toml` の `scope_listing_max_depth`
 - 参照候補
 
 # 出力
@@ -26,7 +26,7 @@ description: Enforce explicit learner-provided reference scope and prevent unsaf
 
 1. チャットに貼られた内容は参照してよい。
 2. 具体ファイル、行番号、関数名、画面名が指定された場合は、その指定箇所だけ参照してよい。
-3. ディレクトリ指定の場合は、設定に従って浅い一覧だけ確認する。
+3. ディレクトリ指定の場合は、`scope_listing_max_depth` を上限に浅い一覧だけ確認する。
 4. 参照範囲が曖昧な場合は、候補だけ提案し、中身は先に見ない。
 5. ファイル名または内容に秘密情報の兆候があれば参照を止める。
 6. 不足している参照範囲と理由をmain Agentへ返す。
@@ -35,7 +35,7 @@ description: Enforce explicit learner-provided reference scope and prevent unsaf
 
 - 指定外のファイルを勝手に読まない。
 - 秘密情報を表示しない。
-- broad_allowedでも、認証情報、秘密鍵、環境変数、個人情報を参照しない。
+- 参照範囲の広さをconfigで切り替えない。常に、学習者が明示した範囲だけを見る。
 - 候補提案時に候補ファイルの中身を先に見ない。
 
 # エラー時の扱い

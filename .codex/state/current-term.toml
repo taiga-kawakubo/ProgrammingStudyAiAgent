@@ -1,9 +1,0 @@
-active = false
-term_id = ""
-term_path = ""
-classification = ""
-status = "none"
-awaiting = "none"
-referenced_scope = []
-last_user_intent = "initial"
-updated_at = ""
