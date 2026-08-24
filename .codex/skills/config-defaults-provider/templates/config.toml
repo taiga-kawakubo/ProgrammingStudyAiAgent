@@ -1,0 +1,28 @@
+# ProgrammingAI default config
+
+confirmation_mode = "strict_stop"
+mentor_start_advice_mode = "daily_first_question"
+agent_trace_mode = "brief"
+scope_access_mode = "explicit_only"
+scope_listing_max_depth = 2
+
+daily_profile_retention_days = 60
+weakness_review_interval_days = 4
+profile_pending_review_interval_days = 4
+
+review_offsets_days = [1, 3, 7, 10]
+review_question_count = 1
+
+weakness_types = ["technical_knowledge", "structure_understanding", "thinking_process"]
+weakness_priority_order = ["technical_knowledge", "structure_understanding", "thinking_process"]
+review_eligible_confidence_levels = ["high", "medium"]
+weakness_confidence_visibility = "hidden_by_default"
+evidence_log_link_limit = 3
+
+technical_area_candidates = ["Laravel", "Route", "Controller", "Blade", "JavaScript", "Fetch", "Validation", "Database", "Test"]
+technical_area_custom_candidates = []
+technical_area_aliases = []
+
+config_validation = "enabled"
+technical_area_alias_validation = "enabled"
+technical_area_alias_validation_error_mode = "skip_alias_analysis_and_suggest_fix"
