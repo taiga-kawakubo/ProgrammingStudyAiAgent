@@ -43,6 +43,7 @@ RubyハーネスはAgent本体ではなく、保守者向けの最小整合性�
 - 分類に応じた回答サブAgentの型で説明する
 - 回答の最後に軽い理解確認を1つ入れる
 - プログラミング学習質問をLearning Caseへ一次記録する
+- Learning Caseには `case_id`、`status`、`main_topic`、`related_terms`、`next_action` を残す
 - 明示的な要約依頼、ログ化確認、保存許可、Agent判断による軽量メモを扱う
 - 「内容をまとめてほしい」では学習ログ候補だけを作り、保存許可を別に確認する
 - 学習者が保存を許可した場合だけ、確定学習ログを作る
@@ -84,7 +85,7 @@ detailed: 保守確認用に折りたたみ形式で詳しい処理ログを表�
 `brief` では、学習者が不安なく流れを確認できるように、次のような短い情報だけを出す。
 
 ```md
-Agent経路: config-guard → classifier → scope-reader → learning-log-workflow → feature-answer → learning-log-workflow
+Agent経路: UserPromptSubmit hook → daily-rollup-script → inbox-status-script → config-guard → classifier → scope-reader → learning-log-workflow → feature-answer → learning-log-workflow
 ```
 
 `detailed` は、設定確認、参照範囲確認、分類、回答Skill、ログ化判定などの詳細を確認したい場合だけ使用する。
@@ -131,6 +132,21 @@ Agent経路: config-guard → classifier → scope-reader → learning-log-workf
 main Agentは、プログラミング学習質問、新しい学習質問への移行、理解確認への返答、明示的な要約依頼、Agent判断による軽量メモを扱う。
 プログラミング学習の質問は、ログ化可否にかかわらず `learning-cases/YYYY-MM-DD.md` に一次記録として保存する。
 
+Learning Case本体では、1件ごとに `## YYYY-MM-DD-NNN 学習テーマ` の見出しを置き、次の管理情報を残す。
+
+```md
+case_id: YYYY-MM-DD-NNN
+status: in_progress / completed
+main_topic: Laravel
+related_terms: PHP, Laravel, Route, Controller
+next_action: 次に確認すること
+```
+
+`status` は `in_progress` と `completed` の2つだけを使う。
+`in_progress` は、参照範囲確認、理解確認、ログ化判断、保存判断、未解決事項など、戻る価値がある待機や継続が残っている状態である。
+`completed` は、完全習得ではなく、その質問サイクルが一区切りになった状態である。
+`main_topic` は1つ、`related_terms` は複数可とする。
+
 次の流れを固定する。
 
 ```md
@@ -152,7 +168,10 @@ Learning Caseへの一次記録
 
 ```md
 learning-cases/
+learning-cases/inbox/
+learning-cases/outbox/
 learning-logs/
+learning-logs/outbox/
 notebook/
 .codex/agents/mentor/MEMORY.md
 ```
@@ -168,6 +187,13 @@ UserPromptSubmit hookは、入力のたびに `.codex/internal/scripts/daily_rol
 scriptは、当日の `notebook/mentor-briefings/YYYY-MM-DD.md` がある場合は何もせず終了する。
 当日のmentor-briefingsがない場合だけ、前日の `learning-cases/YYYY-MM-DD.md` から `notebook/daily-learning-profiles/YYYY-MM-DD.md` を作成し、当日の `notebook/mentor-briefings/YYYY-MM-DD.md` を作成する。前日のLearning Caseがない場合も、当日のmentor-briefingsには「判断材料が少ない」ことを残す。
 main Agentは、mentor-briefingsを使って学習前表示を行い、必要に応じて `.codex/agents/mentor/MEMORY.md` やlearner-profileへの反映候補を確認する。
+
+UserPromptSubmit hookは、同じタイミングで `.codex/internal/scripts/inbox_status_on_prompt.rb` も実行する。
+このscriptは `learning-cases/YYYY-MM-DD.md` を正本として読み、`learning-cases/inbox/*.md` と `learning-cases/outbox/*.md` をリンク集として再生成する。
+未完了の `in_progress` がある場合は、学習者の作業を止めずに一言だけ通知する。
+`learning-logs` は確定学習ログであるため、`learning-logs/inbox/` は作らない。
+必要な場合だけ `learning-logs/outbox/*.md` を分野別のリンク集として再生成する。
+inbox/outboxのリンク集は自動生成物であり、Learning Case本体を移動しない。
 
 ## 苦手傾向
 

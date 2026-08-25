@@ -29,6 +29,7 @@ description: Manage log/no-log recommendation, learner revision, confirmed local
 ```md
 learning_case_record_required: true / false
 learning_case_update_candidate:
+case_id:
 log_recommendation: log / no_log / not_applicable
 log_trigger: learning_question / explicit_summary_request / learner_revision / save_permission / agent_judgment
 reason: 推奨理由
@@ -40,14 +41,17 @@ next_user_reply: none / log_decision / learner_revision / save_permission / scop
 light_memo_candidate:
 confirmed_log_candidate:
 learning_case_observation_candidate:
-status:
+status: in_progress / completed
+main_topic:
+related_terms:
+next_action:
 ```
 
 # 処理手順
 
 1. 入力が、プログラミング学習質問、ログ化依頼、ログ候補の修正、保存許可、保存拒否、設定相談、雑談のどれかを分ける。
 2. プログラミング学習質問なら、ログ化可否にかかわらずLearning Caseの更新案を作る。
-3. Learning Caseには、質問、分類、つまずきの中核、学習内容、苦手種類候補、観察パターン、関連技術語を残す。
+3. Learning Caseには、case_id、status、main_topic、related_terms、next_action、質問、分類、つまずきの中核、学習内容、苦手種類候補、観察パターン、関連技術語を残す。
 4. 回答後や理解確認への返答後、復習価値がありそうな場合だけ、ログ化するかどうかを学習者へ確認する。
 5. 「内容をまとめてほしい」などの明示依頼では、まず学習ログ候補を作成し、その後に保存許可を確認する。
 6. ログ候補の作成だけでは、確定学習ログを保存しない。
@@ -60,6 +64,39 @@ status:
 13. ファイル編集による修正は、学習者が明示的に依頼または許可した場合だけmain Agentが扱う。
 14. 学習者が「修正完了」と伝えたら、保存許可を確認する。
 15. 保存処理はmain Agentが実行する。
+
+# statusの扱い
+
+`status` は `in_progress` と `completed` の2つだけを使う。
+
+`in_progress` にするケース:
+
+- 参照範囲確認待ち。
+- 回答前確認待ち。
+- 理解確認への返答待ち。
+- ログ化する/しないの確認待ち。
+- ログ候補の修正待ち。
+- 保存する/しないの確認待ち。
+- 未解決事項が残り、後で戻る価値がある。
+
+`completed` にするケース:
+
+- 回答が完了し、次に待つユーザー返答がない。
+- 学習者が理解した、解決した、保存しない、のいずれかを明示した。
+- 保存許可を受けて確定学習ログ候補を返した。
+- 未解決事項があっても、その質問サイクルとしては一区切りになった。
+
+`completed` は完全習得ではなく、その質問サイクルが一区切りになったという意味で使う。
+
+# inbox/outbox索引
+
+Learning Case本体は `learning-cases/YYYY-MM-DD.md` に残す。
+`learning-cases/inbox/*.md` と `learning-cases/outbox/*.md` は、自動生成されるリンク集として扱う。
+このSkillは、リンク集を直接作成しない。
+main AgentがLearning Case本体に残した `status` と `main_topic` をもとに、UserPromptSubmit hookのscriptがリンク集を再生成する。
+
+`learning-logs` は確定学習ログであるため、`learning-logs/inbox/` は作らない。
+必要な場合だけ、`learning-logs/outbox/*.md` を確定ログのリンク集として扱う。
 
 # 保存先ガード
 
@@ -88,7 +125,13 @@ Learning Caseには、既存の質問、つまずき、学習内容を残した�
 `関連技術語` は、Laravel、Route、Controller、Blade、Collection、API名、構文名などの補助タグであり、これだけで苦手判定を行わない。
 
 ```md
-# 学習テーマ
+## YYYY-MM-DD-NNN 学習テーマ
+
+case_id: YYYY-MM-DD-NNN
+status: in_progress / completed
+main_topic:
+related_terms:
+next_action:
 
 # 質問分類
 
@@ -170,6 +213,9 @@ Learning Caseには、既存の質問、つまずき、学習内容を残した�
 - 保存可能状態
 - Learning Case状態更新案
 - Learning Caseへ残す一次観察候補
+- inbox/outbox索引に使うstatus
+- inbox/outbox索引に使うmain_topic
+- 後で戻るためのnext_action
 
 # ダミー検証
 

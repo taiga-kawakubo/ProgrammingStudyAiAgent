@@ -4,10 +4,11 @@
 require "json"
 
 module ProgrammingAI
-  VERSION = "2.2.0-config-and-classification-validation"
+  VERSION = "2.3.0-config-classification-and-status-validation"
   PROJECT_ROOT = File.expand_path("../../..", __dir__)
 
   VALID_CLASSIFICATIONS = %w[feature unit assess error].freeze
+  VALID_STATUSES = %w[in_progress completed].freeze
 
   # configのバリデーションの定義
   CONFIG_SCHEMA = {
@@ -84,6 +85,8 @@ module ProgrammingAI
     def run  #検証処理の順番を指定
       check_config
       check_classification_labels
+      check_learning_case_statuses
+      check_learning_logs_inbox_absent
       result
     end
 
@@ -168,6 +171,20 @@ module ProgrammingAI
       end
     end
 
+    def check_learning_case_statuses
+      status_entries.each do |source, value|
+        next if VALID_STATUSES.include?(value)
+
+        errors << "#{source}: invalid status #{value.inspect}"
+      end
+    end
+
+    def check_learning_logs_inbox_absent
+      return unless exist?("learning-logs/inbox")
+
+      errors << "learning-logs/inbox is not allowed"
+    end
+
     def classification_entries
       files = Dir.glob(File.join(root, "{learning-cases,learning-logs,.codex/agents/mentor}", "**", "*.md"), File::FNM_EXTGLOB)
       files.flat_map do |file|
@@ -189,6 +206,21 @@ module ProgrammingAI
       end
       values
     end
+
+    def status_entries
+      files = Dir.glob(File.join(root, "{learning-cases,learning-logs}", "**", "*.md"), File::FNM_EXTGLOB)
+      files.flat_map do |file|
+        source = file.delete_prefix("#{root}/")
+        extract_statuses(File.read(file)).map { |value| [source, value] }
+      end
+    end
+
+    def extract_statuses(text)
+      text.lines.each_with_object([]) do |line, values|
+        match = line.strip.match(/\Astatus:\s*(\S+)/)
+        values << match[1] if match
+      end
+    end
   end
 
   class CLI
@@ -199,7 +231,7 @@ module ProgrammingAI
         validator = ProjectValidator.new(PROJECT_ROOT)
         result = validator.run
         if result[:ok]
-          puts "PASS: ProgrammingAI config and classification validation"
+          puts "PASS: ProgrammingAI config, classification, and status validation"
           puts JSON.pretty_generate(result) unless result[:warnings].empty?
         else
           warn JSON.pretty_generate(result)

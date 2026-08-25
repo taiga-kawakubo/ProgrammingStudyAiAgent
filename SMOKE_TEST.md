@@ -9,6 +9,7 @@ Rubyハーネスは保存フローを再現せず、設定値と保存済み分�
 質問
 → UserPromptSubmit hook
 → daily_rollup_on_prompt.rbによる日次成果物確認
+→ inbox_status_on_prompt.rbによるinbox/outbox索引確認
 → 分類
 → Learning Case一次記録
 → 回答
@@ -43,6 +44,7 @@ Rubyハーネスは保存フローを再現せず、設定値と保存済み分�
 - scope-reader: 参照範囲がないため、コード閲覧前に確認が必要
 - feature-answer: 回答する場合は仮定を明示し、全体像、理解ステップ、確認順序を優先する
 - learning-log-workflow: 回答未完了のため確定ログは作らず、必要ならLearning Caseに参照範囲確認中として残す
+- Learning Case: 戻る価値がある待機が残る場合はstatus: in_progress
 ```
 
 ### 002 unit分類と回答
@@ -202,6 +204,47 @@ Route / Controller / Blade の流れで2回つまずき、観察パターンと�
 - ログ化確認待ちの場合は、mentorより先に確認待ちを解消する
 ```
 
+### 014 Learning Case status
+
+```md
+入力:
+プログラミング学習質問がLearning Caseに一次記録される。
+
+期待値:
+- 1件ごとに `## YYYY-MM-DD-NNN 学習テーマ` の見出しがある
+- case_id: YYYY-MM-DD-NNN がある
+- status: in_progress または completed のどちらかだけを使う
+- main_topic が1つある
+- related_terms は複数でもよい
+- next_action がある場合、後で戻る時の確認ポイントとして読める
+```
+
+### 015 inbox/outboxリンク集
+
+```md
+入力:
+Learning Caseに status: in_progress と status: completed の記録がある。
+
+期待値:
+- UserPromptSubmit hookが `.codex/internal/scripts/inbox_status_on_prompt.rb` を呼ぶ
+- `learning-cases/inbox/*.md` に in_progress のリンクが作られる
+- `learning-cases/outbox/*.md` に completed のリンクが作られる
+- Learning Case本体は `learning-cases/YYYY-MM-DD.md` から移動しない
+- リンク集は main_topic ごとに分かれる
+```
+
+### 016 learning-logs outbox
+
+```md
+入力:
+確定学習ログが `learning-logs/YYYY-MM-DD-NNN-topic.md` にある。
+
+期待値:
+- `learning-logs/outbox/*.md` に確定ログへのリンクが作られる
+- `learning-logs/inbox/` は作らない
+- 確定学習ログは基本的に completed として扱う
+```
+
 ## 合格条件
 
 - classifierが分類、分類理由、確信度、不足情報、確認要否を返す。
@@ -213,6 +256,9 @@ Route / Controller / Blade の流れで2回つまずき、観察パターンと�
 - 保存拒否時に軽量メモを残さない。
 - 確定後にlearning-logs直下へ生成候補を作れる。
 - UserPromptSubmit hookの日次処理が成果物ファイルの存在で二重実行を避ける。
+- UserPromptSubmit hookがinbox/outboxリンク集を再生成し、in_progressがあれば短く通知する。
+- Learning Caseのstatusは `in_progress` または `completed` だけを使う。
+- `learning-logs/inbox/` を作らない。
 - mentorが当日のmentor-briefingsを読み、初回学習質問ではmentor表示後に回答へ続ける。
 - profile-memoryとmentor Agentが、観察パターンを中心に苦手傾向を根拠付きで判定し、必要なものだけmentor表示へ渡せる。
 

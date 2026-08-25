@@ -7,6 +7,11 @@
             "type": "command",
             "command": "ruby \"$(git rev-parse --show-toplevel)/.codex/internal/scripts/daily_rollup_on_prompt.rb\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "ruby \"$(git rev-parse --show-toplevel)/.codex/internal/scripts/inbox_status_on_prompt.rb\"",
+            "timeout": 10
           }
         ]
       }

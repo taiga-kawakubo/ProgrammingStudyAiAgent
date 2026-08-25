@@ -269,13 +269,32 @@ Agent判断による軽量メモは、繰り返しのつまずきや重要な未
 確定学習ログは、復習とmentor分析に使える粒度で書く。
 会話全文や不要なコード全文を保存しない。
 
+Learning Caseには、学習者が後から途中の学習に戻れるように、1件ごとに `## YYYY-MM-DD-NNN 学習テーマ` の見出しを置き、次の管理情報を持たせる。
+
+```md
+case_id: YYYY-MM-DD-NNN
+status: in_progress / completed
+main_topic: Laravel
+related_terms: PHP, Laravel, Route, Controller
+next_action: 次に確認すること
+```
+
+`status` は `in_progress` と `completed` の2つだけを使う。
+`in_progress` は、参照範囲確認、理解確認、ログ化判断、保存判断、未解決事項など、後で戻る価値がある状態である。
+`completed` は、完全習得ではなく、その質問サイクルが一区切りになった状態である。
+`main_topic` は分野別索引に使う主分類として1つだけ記録する。
+`related_terms` は複数記録できる補助タグとして扱う。
+
 ## 11. 保存先要件
 
 ProgrammingAIの学習データ保存先は、このProject内に限定する。
 
 ```md
 learning-cases/
+learning-cases/inbox/
+learning-cases/outbox/
 learning-logs/
+learning-logs/outbox/
 notebook/
 .codex/agents/mentor/MEMORY.md
 ```
@@ -290,6 +309,15 @@ extensions/ad_hoc/notes/
 
 `notion-drafts/` は現行構成では使用しない。
 外部サービスへの自動保存もしない。
+
+`learning-cases/YYYY-MM-DD.md` は、日付ごとの一次記録の正本である。
+`learning-cases/inbox/*.md` と `learning-cases/outbox/*.md` は、正本へのリンク集として扱う。
+学習内容の本体は、inbox/outboxへ移動しない。
+
+`learning-cases/inbox/*.md` には `status: in_progress` のLearning Caseへのリンクを置く。
+`learning-cases/outbox/*.md` には `status: completed` のLearning Caseへのリンクを置く。
+`learning-logs` は確定学習ログであるため、`learning-logs/inbox/` は作らない。
+必要な場合だけ、`learning-logs/outbox/*.md` を確定ログの分野別リンク集として扱う。
 
 ## 12. mentor要件
 
@@ -334,10 +362,14 @@ mentorは、次の3つを短く出す。
 -> なければ前日のLearning Caseを確認
 -> notebook/daily-learning-profiles/前日.md を作成
 -> notebook/mentor-briefings/今日.md を作成
+-> .codex/internal/scripts/inbox_status_on_prompt.rb
+-> learning-cases/inbox と learning-cases/outbox のリンク集を再生成
+-> in_progress があれば一言だけ通知
 ```
 
 処理済み判定は `.codex/state` ではなく、成果物ファイルの存在で行う。
 前日のLearning Caseがない場合でも、当日のmentor-briefingsには「判断材料が少ない」ことを残し、同じ日に何度も日次処理が走らないようにする。
+inbox/outboxの更新は、Learning Case本体の `status` と `main_topic` を読むだけにし、hook側で完了判定をしない。
 hookの通常実行時は、当日のmentor-briefingsが存在すれば何も出力しない。
 
 ## 14. 苦手傾向要件
@@ -418,7 +450,7 @@ config keyにしないものは次の通りである。
 `brief` では、学習者が流れを確認できる短い表示にする。
 
 ```md
-Agent経路: UserPromptSubmit hook -> daily-rollup-script -> config-guard -> mentor -> classifier -> scope-reader -> learning-log-workflow -> feature-answer -> learning-log-workflow
+Agent経路: UserPromptSubmit hook -> daily-rollup-script -> inbox-status-script -> config-guard -> mentor -> classifier -> scope-reader -> learning-log-workflow -> feature-answer -> learning-log-workflow
 ```
 
 `detailed` は保守確認用であり、通常学習では多用しない。
@@ -449,6 +481,9 @@ ProgrammingAIは、次の状態を満たすことを成功条件とする。
 - `main Agent`、回答系Skill、共通制御Skill、mentor Agentの違いを説明できる。
 - `feature / unit / assess / error` の分類基準と回答先を説明できる。
 - `learning-cases`、`learning-logs`、`notebook/daily-learning-profiles`、`notebook/mentor-briefings`、`.codex/hooks.json`、`.codex/internal/scripts`、`.codex/agents/mentor/MEMORY.md` の役割を混同しない。
+- Learning Caseの正本とinbox/outboxリンク集の役割を混同しない。
+- `status` は `in_progress` と `completed` だけを使う。
+- `learning-logs/inbox/` を作らない。
 - 苦手判定は観察パターンの繰り返しを中心に行い、関連技術語だけで苦手を固定しない。
 - `agent_trace` を見て、どの処理経路を通ったか読める。
 - 修正前に、見るファイル、変更候補、検証方法を並べられる。

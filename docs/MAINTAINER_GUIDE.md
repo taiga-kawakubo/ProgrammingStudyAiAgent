@@ -42,6 +42,8 @@ AGENTS.md
 | 参照範囲を勝手に読む | `.codex/skills/scope-reader/SKILL.md` と `AGENTS.md` |
 | 回答の型が崩れる | 対象の回答Skill |
 | Learning Caseへの一次記録が変 | `.codex/skills/learning-log-workflow/SKILL.md` |
+| inbox/outboxのリンク集が変 | `.codex/internal/scripts/inbox_status_on_prompt.rb` と `learning-cases/YYYY-MM-DD.md` |
+| 未完了メモが出ない | `.codex/hooks.json`、`.codex/internal/scripts/inbox_status_on_prompt.rb`、Learning Caseの `status` |
 | ログ保存確認が変 | `.codex/skills/learning-log-workflow/SKILL.md` |
 | mentor表示が出ない | `.codex/skills/mentor/SKILL.md` と `.codex/agents/mentor/AGENT.md` |
 | 日次学習傾向やmentor-briefingsが作られない | `.codex/hooks.json` と `.codex/internal/scripts/daily_rollup_on_prompt.rb` |
@@ -56,6 +58,7 @@ ProgrammingAIの入力からログ生成までの接続は、次の流れで確�
 学習者の質問
 → UserPromptSubmit hook
 → daily_rollup_on_prompt.rb(日次学習傾向 / mentor-briefings準備)
+→ inbox_status_on_prompt.rb(inbox/outbox索引更新 / 未完了メモ)
 → main Agent
 → config-guard
 → mentor-briefings確認(必要な場合だけmentor表示)
@@ -76,20 +79,21 @@ ProgrammingAIの入力からログ生成までの接続は、次の流れで確�
 1. 質問が学習質問か、管理操作かをmain Agentが見る。
 2. UserPromptSubmit hookが、入力のたびに日次処理scriptを呼び出す。
 3. scriptは当日のmentor-briefingsがあれば何もせず、なければ前日分のdaily-learning-profilesと当日分のmentor-briefingsを作る。
-4. config-guardが設定を確認する。
-5. `学習開始` または日付変更後の最初の学習質問では、mentorがmentor-briefingsを使って復習と確認ポイントを出す。
-6. 最初の学習質問だった場合は、mentor表示後に同じ入力への回答も続ける。
-7. classifierが質問分類を返す。
-8. scope-readerが参照範囲を確認する。
-9. learning-log-workflowが、Learning Caseへの一次記録が必要かを判断する。
-10. 分類に応じた回答サブAgentが回答を作る。
-11. main Agentが理解確認を行う。
-12. learning-log-workflowが、理解確認への返答や新しい学習質問への移行から、ログ化確認が必要かを判断する。
-13. 明示的な要約依頼なら、learning-log-workflowがログ候補を作る。
-14. 保存許可後だけ確定学習ログを生成する。
-15. ログ化しない場合やAgent判断では、Learning Caseに状態更新を残す。
-16. 確定学習ログ保存時、mentor Agentがlearning-casesとlearning-logsから苦手候補を分析する。
-17. main Agentが `.codex/agents/mentor/MEMORY.md` に分析結果を反映する。
+4. inbox_status_on_prompt.rbがLearning Case本体を読み、inbox/outboxのリンク集を再生成し、未完了があれば一言だけ通知する。
+5. config-guardが設定を確認する。
+6. `学習開始` または日付変更後の最初の学習質問では、mentorがmentor-briefingsを使って復習と確認ポイントを出す。
+7. 最初の学習質問だった場合は、mentor表示後に同じ入力への回答も続ける。
+8. classifierが質問分類を返す。
+9. scope-readerが参照範囲を確認する。
+10. learning-log-workflowが、Learning Caseへの一次記録が必要かを判断する。
+11. 分類に応じた回答サブAgentが回答を作る。
+12. main Agentが理解確認を行う。
+13. learning-log-workflowが、理解確認への返答や新しい学習質問への移行から、ログ化確認が必要かを判断する。
+14. 明示的な要約依頼なら、learning-log-workflowがログ候補を作る。
+15. 保存許可後だけ確定学習ログを生成する。
+16. ログ化しない場合やAgent判断では、Learning Caseに状態更新を残す。
+17. 確定学習ログ保存時、mentor Agentがlearning-casesとlearning-logsから苦手候補を分析する。
+18. main Agentが `.codex/agents/mentor/MEMORY.md` に分析結果を反映する。
 
 ## 4. 日本語判断表
 
@@ -291,6 +295,7 @@ Rubyは日本語の文字列、コメント、識別子を扱える。
 | --- | --- |
 | `.codex/hooks.json` | ユーザー入力時に日次処理scriptを呼び出す |
 | `.codex/internal/scripts/daily_rollup_on_prompt.rb` | 当日のmentor-briefingsがなければ、前日のLearning Caseから日次学習傾向とmentor-briefingsを作る |
+| `.codex/internal/scripts/inbox_status_on_prompt.rb` | Learning Case本体からinbox/outboxリンク集を再生成し、未完了テーマを短く通知する |
 | `notebook/daily-learning-profiles/YYYY-MM-DD.md` | 前日のLearning Caseから作成される日次学習傾向 |
 | `notebook/mentor-briefings/YYYY-MM-DD.md` | その日の学習開始時にmentorが読む学習前メモ |
 
@@ -302,7 +307,10 @@ Rubyは日本語の文字列、コメント、識別子を扱える。
 | 場所 | 役割 |
 | --- | --- |
 | `learning-cases/` | 日付ごとの一次学習記録 |
+| `learning-cases/inbox/` | `status: in_progress` のLearning Caseへの分野別リンク集 |
+| `learning-cases/outbox/` | `status: completed` のLearning Caseへの分野別リンク集 |
 | `learning-logs/` | 学習者が確認した確定学習ログ |
+| `learning-logs/outbox/` | 確定学習ログへの分野別リンク集 |
 | `notebook/` | daily-learning-profiles、mentor-briefings、learner-profile、Memory |
 | `.codex/hooks.json` | Codex hookの登録 |
 | `.codex/internal/scripts/` | hookから呼ぶ機械的な補助処理 |
@@ -311,6 +319,9 @@ Rubyは日本語の文字列、コメント、識別子を扱える。
 ProgrammingAIの学習ログ保存先として、`/Users/taiga/.codex/memories/`、`.codex/memories/`、`extensions/ad_hoc/notes/` を使わない。
 
 `notion-drafts/` は現行構成では使用しない。
+`learning-cases/YYYY-MM-DD.md` が正本であり、inbox/outboxは自動生成のリンク集である。
+リンク集を直接編集しても、次回のUserPromptSubmit hookで再生成される。
+`learning-logs/inbox/` は作らない。
 
 ## 9. 原本の取り扱い
 
@@ -359,12 +370,13 @@ ruby .codex/internal/validation/ProgrammingAIAgent.rb test
 
 ```sh
 ruby -c .codex/internal/scripts/daily_rollup_on_prompt.rb
+ruby -c .codex/internal/scripts/inbox_status_on_prompt.rb
 ```
 
 合格した場合、次のような結果になる。
 
 ```md
-PASS: ProgrammingAI config and classification validation
+PASS: ProgrammingAI config, classification, and status validation
 ```
 
 この検証は、保存フローを自動生成したり、Learning Caseを作成したりしない。
