@@ -4,7 +4,7 @@
 require "json"
 
 module ProgrammingAI
-  VERSION = "2.3.0-config-classification-and-status-validation"
+  VERSION = "2.4.0-config-classification-status-and-log-location-validation"
   PROJECT_ROOT = File.expand_path("../../..", __dir__)
 
   VALID_CLASSIFICATIONS = %w[feature unit assess error].freeze
@@ -86,7 +86,7 @@ module ProgrammingAI
       check_config
       check_classification_labels
       check_learning_case_statuses
-      check_learning_logs_inbox_absent
+      check_learning_logs_index_dirs_absent
       result
     end
 
@@ -179,10 +179,10 @@ module ProgrammingAI
       end
     end
 
-    def check_learning_logs_inbox_absent
-      return unless exist?("learning-logs/inbox")
-
-      errors << "learning-logs/inbox is not allowed"
+    def check_learning_logs_index_dirs_absent
+      %w[learning-logs/inbox learning-logs/outbox].each do |relative_path|
+        errors << "#{relative_path} is not allowed" if exist?(relative_path)
+      end
     end
 
     def classification_entries
@@ -231,7 +231,7 @@ module ProgrammingAI
         validator = ProjectValidator.new(PROJECT_ROOT)
         result = validator.run
         if result[:ok]
-          puts "PASS: ProgrammingAI config, classification, and status validation"
+          puts "PASS: ProgrammingAI config, classification, status, and log location validation"
           puts JSON.pretty_generate(result) unless result[:warnings].empty?
         else
           warn JSON.pretty_generate(result)

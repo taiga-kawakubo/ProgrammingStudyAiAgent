@@ -171,29 +171,28 @@ learning-cases/
 learning-cases/inbox/
 learning-cases/outbox/
 learning-logs/
-learning-logs/outbox/
 notebook/
 .codex/agents/mentor/MEMORY.md
 ```
 
 `/Users/taiga/.codex/memories/`、`.codex/memories/`、`extensions/ad_hoc/notes/` はCodex全体の補助メモリであり、ProgrammingAIの学習ログ保存先として使わない。
 
-学習者が「ログ化してください」「保存してください」と言った場合も、保存先はProject内の `learning-logs/YYYY-MM-DD-NNN-topic.md` に固定する。
+学習者が「ログ化してください」「保存してください」と言った場合も、保存先はProject内の `learning-logs/YYYY-MM-DD-NNN-日本語件名.md` に固定する。
+確定学習ログの件名は日本語で短く書き、ファイル名に使えない記号 `/ \ : * ? " < > |` は省くか別の語に置き換える。
 Project外へ保存しそうになった場合は処理を止め、保存先を確認してから進める。
 
 `notion-drafts/` は使用しない。既存ファイルがある場合は削除対象とする。
 
 UserPromptSubmit hookは、入力のたびに `.codex/internal/scripts/daily_rollup_on_prompt.rb` を実行する。
-scriptは、当日の `notebook/mentor-briefings/YYYY-MM-DD.md` がある場合は何もせず終了する。
-当日のmentor-briefingsがない場合だけ、前日の `learning-cases/YYYY-MM-DD.md` から `notebook/daily-learning-profiles/YYYY-MM-DD.md` を作成し、当日の `notebook/mentor-briefings/YYYY-MM-DD.md` を作成する。前日のLearning Caseがない場合も、当日のmentor-briefingsには「判断材料が少ない」ことを残す。
+scriptは、前日の `learning-cases/YYYY-MM-DD.md` があり、前日の `notebook/daily-learning-profiles/YYYY-MM-DD.md` が未作成なら日次学習傾向を作成する。
+その後、当日の `notebook/mentor-briefings/YYYY-MM-DD.md` が未作成ならmentor-briefingsを作成する。前日のLearning Caseがない場合も、当日のmentor-briefingsには「判断材料が少ない」ことを残す。
 main Agentは、mentor-briefingsを使って学習前表示を行い、必要に応じて `.codex/agents/mentor/MEMORY.md` やlearner-profileへの反映候補を確認する。
 
 UserPromptSubmit hookは、同じタイミングで `.codex/internal/scripts/inbox_status_on_prompt.rb` も実行する。
 このscriptは `learning-cases/YYYY-MM-DD.md` を正本として読み、`learning-cases/inbox/*.md` と `learning-cases/outbox/*.md` をリンク集として再生成する。
 未完了の `in_progress` がある場合は、学習者の作業を止めずに一言だけ通知する。
-`learning-logs` は確定学習ログであるため、`learning-logs/inbox/` は作らない。
-必要な場合だけ `learning-logs/outbox/*.md` を分野別のリンク集として再生成する。
-inbox/outboxのリンク集は自動生成物であり、Learning Case本体を移動しない。
+`learning-logs` は確定学習ログを直下に置く場所であり、`learning-logs/inbox/` と `learning-logs/outbox/` は作らない。
+inbox/outboxのリンク集はLearning Case専用の自動生成物であり、Learning Case本体を移動しない。
 
 ## 苦手傾向
 

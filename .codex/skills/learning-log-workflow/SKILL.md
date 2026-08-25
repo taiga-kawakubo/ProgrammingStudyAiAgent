@@ -95,8 +95,10 @@ Learning Case本体は `learning-cases/YYYY-MM-DD.md` に残す。
 このSkillは、リンク集を直接作成しない。
 main AgentがLearning Case本体に残した `status` と `main_topic` をもとに、UserPromptSubmit hookのscriptがリンク集を再生成する。
 
-`learning-logs` は確定学習ログであるため、`learning-logs/inbox/` は作らない。
-必要な場合だけ、`learning-logs/outbox/*.md` を確定ログのリンク集として扱う。
+`learning-logs` は確定学習ログを直下に置く場所である。
+`learning-logs/inbox/` と `learning-logs/outbox/` は作らない。
+確定学習ログは `learning-logs/YYYY-MM-DD-NNN-日本語件名.md` という日付、連番、日本語件名のファイル名で保存する。
+日本語件名は短く書き、ファイル名に使えない記号 `/ \ : * ? " < > |` は省くか別の語に置き換える。
 
 # 保存先ガード
 
@@ -104,7 +106,7 @@ Learning Case、確定学習ログ、日次学習傾向、learner-profile、Memo
 
 ```md
 learning-cases/YYYY-MM-DD.md
-learning-logs/YYYY-MM-DD-NNN-topic.md
+learning-logs/YYYY-MM-DD-NNN-日本語件名.md
 notebook/daily-learning-profiles/YYYY-MM-DD.md
 notebook/learner-profile.md
 notebook/Memory.md

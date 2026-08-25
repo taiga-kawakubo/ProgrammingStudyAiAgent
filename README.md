@@ -97,6 +97,7 @@ learning-logs/
 ```
 
 確定した学習ログを保存します。
+ファイル名は `YYYY-MM-DD-NNN-日本語件名.md` を基本にします。
 
 ```md
 notebook/
@@ -112,7 +113,7 @@ Codex全体の補助メモリである `/Users/taiga/.codex/memories/` や `.cod
 `ログ化してください`、`保存してください` と伝えた場合でも、正式な保存先は次です。
 
 ```md
-learning-logs/YYYY-MM-DD-NNN-topic.md
+learning-logs/YYYY-MM-DD-NNN-日本語件名.md
 ```
 
 Project外へ保存されそうな場合は、保存を止めて保存先を確認します。

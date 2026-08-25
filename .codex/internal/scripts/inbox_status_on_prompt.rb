@@ -26,10 +26,8 @@ module ProgrammingAI
 
     def run
       cases = collect_learning_cases
-      logs = collect_learning_logs
 
       rebuild_case_indexes(cases)
-      rebuild_log_indexes(logs)
       print_in_progress_notice(cases)
     rescue StandardError => error
       warn "ProgrammingAI inbox status skipped: #{error.class}: #{error.message}"
@@ -43,25 +41,6 @@ module ProgrammingAI
     def collect_learning_cases
       Dir.glob(File.join(root, "learning-cases", "*.md")).sort.flat_map do |path|
         parse_learning_case_file(path)
-      end
-    end
-
-    def collect_learning_logs
-      Dir.glob(File.join(root, "learning-logs", "*.md")).sort.map do |path|
-        body = read(path)
-        metadata = metadata_lines(body)
-        related_terms = split_terms(metadata["related_terms"] || metadata["関連技術語"])
-        topic = normalize_topic(metadata["main_topic"] || related_terms.first || DEFAULT_TOPIC)
-
-        Record.new(
-          case_id: metadata["case_id"] || File.basename(path, ".md"),
-          status: "completed",
-          main_topic: topic,
-          related_terms: related_terms,
-          title: first_heading(body) || File.basename(path, ".md"),
-          source_path: relative(path),
-          next_action: metadata["next_action"]
-        )
       end
     end
 
@@ -124,10 +103,6 @@ module ProgrammingAI
       end
     end
 
-    def first_heading(text)
-      text.lines.find { |line| line.start_with?("# ") }&.sub(/\A#+\s*/, "")&.strip
-    end
-
     def title_from(heading, body, case_id)
       title = heading&.sub(/\A#{Regexp.escape(case_id)}\s*/, "")&.strip
       title = nil if title == "学習テーマ"
@@ -184,10 +159,6 @@ module ProgrammingAI
         "outbox",
         cases.select { |record| record.status == "completed" }
       )
-    end
-
-    def rebuild_log_indexes(logs)
-      rebuild_index("learning-logs/outbox", "outbox", logs)
     end
 
     def rebuild_index(relative_dir, label, records)

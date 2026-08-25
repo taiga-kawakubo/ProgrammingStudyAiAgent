@@ -111,7 +111,8 @@ mentorだけは、独立Agentとして `.codex/agents/mentor/` に置く。
 mentor Agentは分析を行うが、保存権限はmain Agentに残す。
 
 日次処理は、UserPromptSubmit hookから呼ばれる `.codex/internal/scripts/daily_rollup_on_prompt.rb` が行う。
-このscriptは、当日のmentor-briefingsがある場合は何もせず終了し、ない場合だけ前日のLearning Caseから日次学習傾向と当日のmentor-briefingsを作成する。
+このscriptは、前日のLearning Caseがあり、前日分の日次学習傾向が未作成なら `notebook/daily-learning-profiles/YYYY-MM-DD.md` を作成する。
+その後、当日のmentor-briefingsが未作成なら `notebook/mentor-briefings/YYYY-MM-DD.md` を作成する。
 
 ## 6. 質問分類要件
 
@@ -246,7 +247,8 @@ Learning Caseには、質問、つまずき、学習内容を残したうえで�
 `関連技術語` は、Laravel、Route、Controller、Blade、Collection、API名、構文名などの補助タグとして扱う。
 関連技術語だけで苦手を断定しない。
 
-確定学習ログは、学習者が保存を許可した場合だけ `learning-logs/YYYY-MM-DD-NNN-topic.md` に保存する。
+確定学習ログは、学習者が保存を許可した場合だけ `learning-logs/YYYY-MM-DD-NNN-日本語件名.md` に保存する。
+日本語件名は学習内容を短く表し、ファイル名に使えない記号 `/ \ : * ? " < > |` は省くか別の語に置き換える。
 
 ログ化の基本フローは次の通りである。
 
@@ -294,7 +296,6 @@ learning-cases/
 learning-cases/inbox/
 learning-cases/outbox/
 learning-logs/
-learning-logs/outbox/
 notebook/
 .codex/agents/mentor/MEMORY.md
 ```
@@ -316,8 +317,8 @@ extensions/ad_hoc/notes/
 
 `learning-cases/inbox/*.md` には `status: in_progress` のLearning Caseへのリンクを置く。
 `learning-cases/outbox/*.md` には `status: completed` のLearning Caseへのリンクを置く。
-`learning-logs` は確定学習ログであるため、`learning-logs/inbox/` は作らない。
-必要な場合だけ、`learning-logs/outbox/*.md` を確定ログの分野別リンク集として扱う。
+`learning-logs` は確定学習ログを直下に置く場所である。
+`learning-logs/inbox/` と `learning-logs/outbox/` は作らない。
 
 ## 12. mentor要件
 
@@ -357,20 +358,18 @@ mentorは、次の3つを短く出す。
 ユーザー入力
 -> UserPromptSubmit hook
 -> .codex/internal/scripts/daily_rollup_on_prompt.rb
--> notebook/mentor-briefings/YYYY-MM-DD.md があるか確認
--> あれば終了
--> なければ前日のLearning Caseを確認
--> notebook/daily-learning-profiles/前日.md を作成
--> notebook/mentor-briefings/今日.md を作成
+-> 前日のLearning Caseを確認
+-> notebook/daily-learning-profiles/前日.md がなければ作成
+-> notebook/mentor-briefings/今日.md がなければ作成
 -> .codex/internal/scripts/inbox_status_on_prompt.rb
 -> learning-cases/inbox と learning-cases/outbox のリンク集を再生成
 -> in_progress があれば一言だけ通知
 ```
 
-処理済み判定は `.codex/state` ではなく、成果物ファイルの存在で行う。
+処理済み判定は `.codex/state` ではなく、daily-learning-profilesとmentor-briefingsの成果物ファイルの存在で行う。
 前日のLearning Caseがない場合でも、当日のmentor-briefingsには「判断材料が少ない」ことを残し、同じ日に何度も日次処理が走らないようにする。
 inbox/outboxの更新は、Learning Case本体の `status` と `main_topic` を読むだけにし、hook側で完了判定をしない。
-hookの通常実行時は、当日のmentor-briefingsが存在すれば何も出力しない。
+hookの通常実行時は、新しいmentor-briefingsを作成した場合だけ日次メモを出力する。
 
 ## 14. 苦手傾向要件
 
@@ -483,7 +482,7 @@ ProgrammingAIは、次の状態を満たすことを成功条件とする。
 - `learning-cases`、`learning-logs`、`notebook/daily-learning-profiles`、`notebook/mentor-briefings`、`.codex/hooks.json`、`.codex/internal/scripts`、`.codex/agents/mentor/MEMORY.md` の役割を混同しない。
 - Learning Caseの正本とinbox/outboxリンク集の役割を混同しない。
 - `status` は `in_progress` と `completed` だけを使う。
-- `learning-logs/inbox/` を作らない。
+- `learning-logs/inbox/` と `learning-logs/outbox/` を作らない。
 - 苦手判定は観察パターンの繰り返しを中心に行い、関連技術語だけで苦手を固定しない。
 - `agent_trace` を見て、どの処理経路を通ったか読める。
 - 修正前に、見るファイル、変更候補、検証方法を並べられる。

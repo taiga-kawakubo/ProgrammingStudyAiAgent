@@ -78,7 +78,7 @@ ProgrammingAIの入力からログ生成までの接続は、次の流れで確�
 
 1. 質問が学習質問か、管理操作かをmain Agentが見る。
 2. UserPromptSubmit hookが、入力のたびに日次処理scriptを呼び出す。
-3. scriptは当日のmentor-briefingsがあれば何もせず、なければ前日分のdaily-learning-profilesと当日分のmentor-briefingsを作る。
+3. scriptは前日分のdaily-learning-profilesが未作成なら作り、当日分のmentor-briefingsが未作成なら作る。
 4. inbox_status_on_prompt.rbがLearning Case本体を読み、inbox/outboxのリンク集を再生成し、未完了があれば一言だけ通知する。
 5. config-guardが設定を確認する。
 6. `学習開始` または日付変更後の最初の学習質問では、mentorがmentor-briefingsを使って復習と確認ポイントを出す。
@@ -228,7 +228,7 @@ Learning Caseへの一次記録
 主な入力:
 
 - `learning-cases/YYYY-MM-DD.md`
-- `learning-logs/YYYY-MM-DD-NNN-topic.md`
+- `learning-logs/YYYY-MM-DD-NNN-日本語件名.md`
 - `notebook/daily-learning-profiles/YYYY-MM-DD.md`
 - `notebook/mentor-briefings/YYYY-MM-DD.md`
 - `.codex/agents/mentor/MEMORY.md`
@@ -293,14 +293,14 @@ Rubyは日本語の文字列、コメント、識別子を扱える。
 
 | 場所 | 役割 |
 | --- | --- |
-| `.codex/hooks.json` | ユーザー入力時に日次処理scriptを呼び出す |
-| `.codex/internal/scripts/daily_rollup_on_prompt.rb` | 当日のmentor-briefingsがなければ、前日のLearning Caseから日次学習傾向とmentor-briefingsを作る |
+| `.codex/hooks.json` | ユーザー入力時に日次処理scriptとinbox/outbox確認scriptを呼び出す |
+| `.codex/internal/scripts/daily_rollup_on_prompt.rb` | 前日のLearning Caseから日次学習傾向を作り、当日のmentor-briefingsがなければ作る |
 | `.codex/internal/scripts/inbox_status_on_prompt.rb` | Learning Case本体からinbox/outboxリンク集を再生成し、未完了テーマを短く通知する |
 | `notebook/daily-learning-profiles/YYYY-MM-DD.md` | 前日のLearning Caseから作成される日次学習傾向 |
 | `notebook/mentor-briefings/YYYY-MM-DD.md` | その日の学習開始時にmentorが読む学習前メモ |
 
-`notebook/mentor-briefings/YYYY-MM-DD.md` が存在する場合、scriptはその日の処理済みと判断して終了する。
-再生成したい場合は、対象日のmentor-briefingsを削除してから、scriptを再実行する。
+scriptは、daily-learning-profilesとmentor-briefingsをそれぞれ成果物ファイルの存在で処理済み判定する。
+再生成したい場合は、対象日の成果物ファイルを削除してから、scriptを再実行する。
 
 ## 8. 保存先の区別
 
@@ -310,7 +310,6 @@ Rubyは日本語の文字列、コメント、識別子を扱える。
 | `learning-cases/inbox/` | `status: in_progress` のLearning Caseへの分野別リンク集 |
 | `learning-cases/outbox/` | `status: completed` のLearning Caseへの分野別リンク集 |
 | `learning-logs/` | 学習者が確認した確定学習ログ |
-| `learning-logs/outbox/` | 確定学習ログへの分野別リンク集 |
 | `notebook/` | daily-learning-profiles、mentor-briefings、learner-profile、Memory |
 | `.codex/hooks.json` | Codex hookの登録 |
 | `.codex/internal/scripts/` | hookから呼ぶ機械的な補助処理 |
@@ -321,14 +320,14 @@ ProgrammingAIの学習ログ保存先として、`/Users/taiga/.codex/memories/`
 `notion-drafts/` は現行構成では使用しない。
 `learning-cases/YYYY-MM-DD.md` が正本であり、inbox/outboxは自動生成のリンク集である。
 リンク集を直接編集しても、次回のUserPromptSubmit hookで再生成される。
-`learning-logs/inbox/` は作らない。
+`learning-logs/` は確定学習ログ本体を直下に置く。
+`learning-logs/inbox/` と `learning-logs/outbox/` は作らない。
 
-## 9. 原本の取り扱い
+## 9. 配布用テンプレートの取り扱い
 
-`ProgrammingAI_v2 原本` は、他の人がコピーして使い始めるための初期テンプレートである。
-原本には、Agent本体、Skill、設定、README、設計書、保守用検証ファイルだけを残す。
+`ProgrammingStudyAiAgent` を他の人がコピーして使い始めるための初期テンプレートとして扱う場合、Agent本体、Skill、設定、README、設計書、保守用検証ファイルだけを残す。
 
-次の個人データは原本へ同期しない。
+次の個人データは配布用テンプレートへ同期しない。
 
 - `learning-cases/*.md`
 - `learning-logs/*.md`
@@ -338,7 +337,7 @@ ProgrammingAIの学習ログ保存先として、`/Users/taiga/.codex/memories/`
 - `notebook/Memory.md` 内の具体的な質問傾向
 - `.codex/agents/mentor/MEMORY.md` 内の具体的な苦手分析ログ
 
-原本を更新する場合は、まずhook、script、実装、Skill、設定、ドキュメントだけを同期対象にし、学習者の学習内容が混ざっていないか確認する。
+配布用テンプレートを更新する場合は、まずhook、script、実装、Skill、設定、ドキュメントだけを同期対象にし、学習者の学習内容が混ざっていないか確認する。
 
 ## 10. mentor Agent
 
@@ -376,7 +375,7 @@ ruby -c .codex/internal/scripts/inbox_status_on_prompt.rb
 合格した場合、次のような結果になる。
 
 ```md
-PASS: ProgrammingAI config, classification, and status validation
+PASS: ProgrammingAI config, classification, status, and log location validation
 ```
 
 この検証は、保存フローを自動生成したり、Learning Caseを作成したりしない。

@@ -11,7 +11,7 @@ learning-cases、learning-logs、日次学習傾向ファイル、mentor-briefin
 ## 入力
 
 - `learning-cases/YYYY-MM-DD.md`
-- `learning-logs/YYYY-MM-DD-NNN-topic.md`
+- `learning-logs/YYYY-MM-DD-NNN-日本語件名.md`
 - `notebook/daily-learning-profiles/YYYY-MM-DD.md`
 - `notebook/mentor-briefings/YYYY-MM-DD.md`
 - `.codex/agents/mentor/MEMORY.md`
